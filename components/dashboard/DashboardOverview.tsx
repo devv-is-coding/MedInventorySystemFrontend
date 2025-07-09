@@ -15,7 +15,10 @@ const DashboardOverview: React.FC = () => {
   const { medicines, transactions, getCurrentStock } = useApp();
 
   const today = new Date().toISOString().split('T')[0];
-  const todayTransactions = transactions.filter(t => t.txn_date === today);
+  const todayTransactions = transactions.filter(t => {
+  const txnDateOnly = new Date(t.txn_date).toISOString().split('T')[0];
+  return txnDateOnly === today;
+});
 
   const stockInTypes = [2, 3, 4];
   const dispenseTypes = [5, 6, 7, 8];
