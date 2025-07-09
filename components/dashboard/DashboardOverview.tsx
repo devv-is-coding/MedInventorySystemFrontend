@@ -1,7 +1,7 @@
-'use client';
+'use client'; // Ensures this component is rendered on the client side
 
 import React from 'react';
-import { useApp } from '@/context/AppContext';
+import { useApp } from '@/context/AppContext'; // Global app state context
 import { 
   Pill, 
   TrendingUp, 
@@ -9,32 +9,43 @@ import {
   Package,
   AlertTriangle,
   Calendar
-} from 'lucide-react';
+} from 'lucide-react'; // Icon set
 
 const DashboardOverview: React.FC = () => {
+  // Get medicines, transactions, and helper function from context
   const { medicines, transactions, getCurrentStock } = useApp();
 
+  // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
+
+  // Filter transactions that occurred today
   const todayTransactions = transactions.filter(t => t.txn_date === today);
-  
+
+  // Sum of today's stock-in transactions (type IDs 2, 3, 4)
   const todayStockIn = todayTransactions
     .filter(t => [2, 3, 4].includes(t.txn_type_id))
     .reduce((sum, t) => sum + t.quantity, 0);
-  
+
+  // Sum of today's dispensed transactions (type ID 5)
   const todayDispensed = todayTransactions
     .filter(t => t.txn_type_id === 5)
     .reduce((sum, t) => sum + t.quantity, 0);
 
+  // List of medicines with stock below threshold (10 units)
   const lowStockMedicines = medicines.filter(medicine => {
     const stock = getCurrentStock(medicine.id);
     return stock < 10;
   });
 
+  // Total number of medicine types
   const totalMedicines = medicines.length;
+
+  // Sum of all current stock from all medicines
   const totalCurrentStock = medicines.reduce((sum, medicine) => {
     return sum + getCurrentStock(medicine.id);
   }, 0);
 
+  // Statistics to display in cards
   const stats = [
     {
       title: 'Total Medicines',
@@ -68,6 +79,7 @@ const DashboardOverview: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with current date */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
         <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -76,7 +88,7 @@ const DashboardOverview: React.FC = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Statistics Card Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
@@ -96,7 +108,7 @@ const DashboardOverview: React.FC = () => {
         })}
       </div>
 
-      {/* Low Stock Alert */}
+      {/* Low Stock Alert Section */}
       {lowStockMedicines.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
           <div className="flex items-center space-x-3 mb-4">
@@ -124,10 +136,11 @@ const DashboardOverview: React.FC = () => {
         </div>
       )}
 
-      {/* Recent Transactions */}
+      {/* Recent Transactions Section */}
       <div className="bg-white p-6 rounded-xl border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h3>
         <div className="space-y-3">
+          {/* Show last 5 transactions in reverse order (most recent first) */}
           {transactions.slice(-5).reverse().map(transaction => {
             const medicine = medicines.find(m => m.id === transaction.medicine_id);
             const txnType = transaction.txn_type_id === 5 ? 'Dispensed' : 'Stock In';
@@ -135,6 +148,7 @@ const DashboardOverview: React.FC = () => {
             return (
               <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
+                  {/* Transaction type icon */}
                   <div className={`p-2 rounded-lg ${
                     transaction.txn_type_id === 5 ? 'bg-red-100' : 'bg-green-100'
                   }`}>
@@ -144,11 +158,13 @@ const DashboardOverview: React.FC = () => {
                       <TrendingUp className="h-4 w-4 text-green-600" />
                     )}
                   </div>
+                  {/* Medicine and type info */}
                   <div>
                     <p className="font-medium text-gray-900">{medicine?.name}</p>
                     <p className="text-sm text-gray-600">{txnType}</p>
                   </div>
                 </div>
+                {/* Quantity and date info */}
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">
                     {transaction.quantity} {medicine?.unit}

@@ -1,11 +1,13 @@
-'use client';
+'use client'; // Next.js directive to render this file on the client
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import Cookies from 'js-cookie';
 
-// Types
+/* ----------------------------------
+   TypeScript Interfaces for Entities
+----------------------------------- */
 export interface Medicine {
   id: string;
   name: string;
@@ -49,6 +51,9 @@ export interface MonthlyReport {
   closing_stock: number;
 }
 
+/* ----------------------------------
+   Context Shape
+----------------------------------- */
 export interface AppContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -74,11 +79,18 @@ export interface AppContextType {
   loadTransactionTypes: () => Promise<void>;
 }
 
+/* ----------------------------------
+   Context Setup
+----------------------------------- */
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+/* ----------------------------------
+   API Config
+----------------------------------- */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 console.log('API_URL configured as:', API_URL);
 
+// Axios instance with interceptors for token & error handling
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -90,6 +102,7 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// Automatically attach token to all requests
 api.interceptors.request.use((config) => {
   const token = Cookies.get('authToken');
   if (token) {
@@ -98,6 +111,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 (unauthorized) and 419 (CSRF)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -106,12 +120,15 @@ api.interceptors.response.use(
       if (typeof window !== 'undefined') window.location.href = '/';
     }
     if (error.response?.status === 419) {
-      console.error('CSRF Token Mismatch - this should not happen with token auth');
+      console.error('CSRF Token Mismatch');
     }
     return Promise.reject(error);
   }
 );
 
+/* ----------------------------------
+   AppProvider: Wrap your app in this
+----------------------------------- */
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,6 +137,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [transactions, setTransactions] = useState<StockTransaction[]>([]);
   const [transactionTypes, setTransactionTypes] = useState<TransactionType[]>([]);
 
+  // Load initial data if token is present
   useEffect(() => {
     const initializeApp = async () => {
       const token = Cookies.get('authToken');
@@ -149,6 +167,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     initializeApp();
   }, []);
 
+  /* ----------------------------
+     Auth Methods
+  ---------------------------- */
   const login = async (username: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     try {
@@ -185,6 +206,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     toast.success('Logout successful');
   };
 
+  /* ----------------------------
+     Medicine Methods
+  ---------------------------- */
   const loadMedicines = async () => {
     try {
       const response = await api.get('/medicines');
@@ -244,6 +268,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  /* ----------------------------
+     Transaction Methods
+  ---------------------------- */
   const loadTransactions = async () => {
     try {
       const response = await api.get('/stock-transactions');
@@ -283,17 +310,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const getTransactionsByDate = (date: string): StockTransaction[] =>
     transactions.filter((t) => t.txn_date === date);
-  
+
   const getCurrentStock = (medicineId: string): number => {
     const medicine = medicines.find((m) => m.id === medicineId);
     if (!medicine || medicine.current_stock === undefined || medicine.current_stock === null) {
       return 0;
     }
     const raw = String(medicine.current_stock);
-    const match = raw.match(/\d+/); // Extract first number (e.g. 100 from "100 600MG")
+    const match = raw.match(/\d+/); // Extract first numeric value from mixed string
     return match ? parseInt(match[0]) : 0;
   };
 
+  /* ----------------------------
+     Reports
+  ---------------------------- */
   const getMonthlyReport = async (year: number, month: number): Promise<MonthlyReport[]> => {
     try {
       const response = await api.get('/reports/monthly', { params: { year, month } });
@@ -319,6 +349,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  /* ----------------------------------
+     Context Value
+  ----------------------------------- */
   const value: AppContextType = {
     isAuthenticated,
     isLoading,
@@ -345,6 +378,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 
+/* ----------------------------------
+   Custom Hook for Easier Use
+----------------------------------- */
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -353,4 +389,5 @@ export const useApp = () => {
   return context;
 };
 
+// Optional alias
 export const myAppHook = useApp;
