@@ -1,34 +1,37 @@
-'use client';
+'use client'; // Enables client-side rendering in Next.js app directory
 
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
-import { TrendingUp, Search, Plus } from 'lucide-react';
+import { useApp } from '@/context/AppContext'; // Global app context
+import { TrendingUp, Search, Plus } from 'lucide-react'; // Icons from Lucide
 
 const StockInForm: React.FC = () => {
+  // Get required data and actions from context
   const { medicines, addTransaction, transactionTypes, getCurrentStock } = useApp();
+
+  // Form state
   const [selectedMedicine, setSelectedMedicine] = useState('');
-  const [transactionType, setTransactionType] = useState('2'); // Default to RETURN
+  const [transactionType, setTransactionType] = useState('2'); // Default to RETURN (ID 2)
   const [quantity, setQuantity] = useState('');
   const [remarks, setRemarks] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Transaction types allowed for Stock-In
   const rddTypes = transactionTypes.filter(t => [2, 3, 4].includes(t.id));
+
+  // Filtered medicine list based on search query
   const filteredMedicines = medicines.filter(medicine =>
     medicine.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedMedicine || !quantity || parseInt(quantity) <= 0) {
-      return;
-    }
+
+    if (!selectedMedicine || !quantity || parseInt(quantity) <= 0) return;
 
     const medicine = medicines.find(m => m.id === selectedMedicine);
-    if (!medicine) {
-      return;
-    }
+    if (!medicine) return;
 
     setIsSubmitting(true);
 
@@ -39,10 +42,10 @@ const StockInForm: React.FC = () => {
         txn_date: new Date().toISOString().split('T')[0],
         quantity: parseInt(quantity),
         remarks,
-        created_by: 'admin'
+        created_by: 'admin',
       });
-      
-      // Reset form
+
+      // Reset form fields
       setSelectedMedicine('');
       setQuantity('');
       setRemarks('');
@@ -58,19 +61,20 @@ const StockInForm: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center space-x-3">
         <TrendingUp className="h-6 w-6 text-green-600" />
         <h2 className="text-2xl font-bold text-gray-900">Stock In (RDD)</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form */}
+        {/* Form Section */}
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Add Stock In Transaction</h3>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Transaction Type */}
+              {/* Transaction Type Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Transaction Type *
@@ -78,7 +82,7 @@ const StockInForm: React.FC = () => {
                 <select
                   value={transactionType}
                   onChange={(e) => setTransactionType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   {rddTypes.map(type => (
                     <option key={type.id} value={type.id.toString()}>
@@ -88,7 +92,7 @@ const StockInForm: React.FC = () => {
                 </select>
               </div>
 
-              {/* Medicine Selection */}
+              {/* Medicine Search & Select */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Medicine *
@@ -100,10 +104,11 @@ const StockInForm: React.FC = () => {
                     placeholder="Search medicines..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                
+
+                {/* Dropdown Results */}
                 {searchQuery && (
                   <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
                     {filteredMedicines.map(medicine => (
@@ -126,7 +131,7 @@ const StockInForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Quantity */}
+              {/* Quantity Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Quantity *
@@ -136,12 +141,12 @@ const StockInForm: React.FC = () => {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
-              {/* Remarks */}
+              {/* Optional Remarks */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Remarks
@@ -150,11 +155,12 @@ const StockInForm: React.FC = () => {
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   placeholder="Optional notes about this transaction..."
                 />
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={!selectedMedicine || !quantity || isSubmitting}
@@ -176,8 +182,9 @@ const StockInForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Selected Medicine Info */}
+        {/* Sidebar: Selected Medicine Info & Quick Stats */}
         <div className="space-y-4">
+          {/* Selected Medicine Preview */}
           {selectedMedicineData && (
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-900 mb-2">Selected Medicine</h4>
@@ -204,12 +211,12 @@ const StockInForm: React.FC = () => {
             </div>
           )}
 
-          {/* Quick Stats */}
+          {/* Static Summary (You can replace this with real data) */}
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-3">Today's RDD Summary</h4>
             <div className="space-y-2 text-sm">
               {rddTypes.map(type => {
-                const todayCount = 0; // You can calculate this based on today's transactions
+                const todayCount = 0; // Replace with real summary if available
                 return (
                   <div key={type.id} className="flex justify-between">
                     <span className="text-gray-600">{type.label}:</span>

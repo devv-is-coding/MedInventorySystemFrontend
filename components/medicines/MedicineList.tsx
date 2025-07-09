@@ -1,7 +1,7 @@
-'use client';
+'use client'; // Ensures this component runs on the client side (Next.js)
 
 import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useApp } from '@/context/AppContext'; // Import global app context
 import { 
   Plus, 
   Search, 
@@ -9,8 +9,9 @@ import {
   Trash2, 
   Package,
   Pill
-} from 'lucide-react';
+} from 'lucide-react'; // Icon imports
 
+// Type definition for medicine form input fields
 interface MedicineFormData {
   name: string;
   unit: string;
@@ -19,7 +20,10 @@ interface MedicineFormData {
 }
 
 const MedicineList: React.FC = () => {
+  // Pull actions and data from app context
   const { medicines, addMedicine, updateMedicine, deleteMedicine, getCurrentStock } = useApp();
+
+  // Local state variables
   const [searchQuery, setSearchQuery] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<string | null>(null);
@@ -31,18 +35,18 @@ const MedicineList: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Filter medicines based on the search query
   const filteredMedicines = medicines.filter(medicine =>
     medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     medicine.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
     medicine.dosage_form.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handles form submission for adding/updating medicine
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.unit || !formData.dosage_form) {
-      return;
-    }
+    if (!formData.name || !formData.unit || !formData.dosage_form) return;
 
     setIsSubmitting(true);
 
@@ -54,6 +58,7 @@ const MedicineList: React.FC = () => {
         await addMedicine(formData);
       }
 
+      // Reset form after submission
       setFormData({ name: '', unit: '', dosage_form: '', description: '' });
       setShowForm(false);
     } catch (error: any) {
@@ -63,6 +68,7 @@ const MedicineList: React.FC = () => {
     }
   };
 
+  // Load selected medicine into form for editing
   const handleEdit = (medicine: any) => {
     setFormData({
       name: medicine.name,
@@ -74,6 +80,7 @@ const MedicineList: React.FC = () => {
     setShowForm(true);
   };
 
+  // Handle medicine deletion
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this medicine?')) {
       try {
@@ -84,6 +91,7 @@ const MedicineList: React.FC = () => {
     }
   };
 
+  // Reset form state
   const resetForm = () => {
     setFormData({ name: '', unit: '', dosage_form: '', description: '' });
     setEditingMedicine(null);
@@ -92,6 +100,7 @@ const MedicineList: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header + Add Medicine Button */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Medicines Catalog</h2>
         <button
@@ -103,7 +112,7 @@ const MedicineList: React.FC = () => {
         </button>
       </div>
 
-      {/* Search */}
+      {/* Search Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
         <input
@@ -123,6 +132,7 @@ const MedicineList: React.FC = () => {
               {editingMedicine ? 'Edit Medicine' : 'Add New Medicine'}
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Form fields for name, unit, dosage_form, and description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Medicine Name *
@@ -131,7 +141,7 @@ const MedicineList: React.FC = () => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -144,7 +154,7 @@ const MedicineList: React.FC = () => {
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   placeholder="e.g., tablet, mL, capsule"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -157,7 +167,7 @@ const MedicineList: React.FC = () => {
                   value={formData.dosage_form}
                   onChange={(e) => setFormData({ ...formData, dosage_form: e.target.value })}
                   placeholder="e.g., tablet, syrup, injection"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -169,14 +179,16 @@ const MedicineList: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {/* Submit and Cancel buttons */}
               <div className="flex space-x-3">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center">
@@ -191,7 +203,7 @@ const MedicineList: React.FC = () => {
                   type="button"
                   onClick={resetForm}
                   disabled={isSubmitting}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 disabled:bg-gray-200 transition-colors"
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
                 >
                   Cancel
                 </button>
@@ -201,7 +213,7 @@ const MedicineList: React.FC = () => {
         </div>
       )}
 
-      {/* Medicine List */}
+      {/* Medicine List Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -209,25 +221,16 @@ const MedicineList: React.FC = () => {
           </h3>
         </div>
         
+        {/* Table for displaying medicine data */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Medicine
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Unit
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dosage Form
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Current Stock
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dosage Form</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Stock</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -246,13 +249,9 @@ const MedicineList: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {medicine.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {medicine.dosage_form}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 text-sm text-gray-900">{medicine.unit}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{medicine.dosage_form}</td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
                         <Package className="h-4 w-4 mr-2 text-gray-500" />
                         <span className={`text-sm font-medium ${
@@ -262,7 +261,7 @@ const MedicineList: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-6 py-4 text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => handleEdit(medicine)}
