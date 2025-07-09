@@ -10,7 +10,7 @@ const StockInForm: React.FC = () => {
 
   // Form state
   const [selectedMedicine, setSelectedMedicine] = useState('');
-  const [transactionType, setTransactionType] = useState('2'); // Default to RETURN (ID 2)
+  const [transactionType, setTransactionType] = useState('2'); // Default to RETURN (ID 4)
   const [quantity, setQuantity] = useState('');
   const [remarks, setRemarks] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
