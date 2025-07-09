@@ -12,40 +12,29 @@ import {
 } from 'lucide-react'; // Icon set
 
 const DashboardOverview: React.FC = () => {
-  // Get medicines, transactions, and helper function from context
   const { medicines, transactions, getCurrentStock } = useApp();
 
-  // Get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split('T')[0];
-
-  // Filter transactions that occurred today
   const todayTransactions = transactions.filter(t => t.txn_date === today);
 
-  // Sum of today's stock-in transactions (type IDs 2, 3, 4)
+  const stockInTypes = [2, 3, 4];
+  const dispenseTypes = [5, 6, 7, 8];
+
   const todayStockIn = todayTransactions
-    .filter(t => [2, 3, 4].includes(t.txn_type_id))
+    .filter(t => stockInTypes.includes(t.txn_type_id))
     .reduce((sum, t) => sum + t.quantity, 0);
 
-  // Sum of today's dispensed transactions (type ID 5)
   const todayDispensed = todayTransactions
-    .filter(t => t.txn_type_id === 5)
+    .filter(t => dispenseTypes.includes(t.txn_type_id))
     .reduce((sum, t) => sum + t.quantity, 0);
 
-  // List of medicines with stock below threshold (10 units)
-  const lowStockMedicines = medicines.filter(medicine => {
-    const stock = getCurrentStock(medicine.id);
-    return stock < 10;
-  });
-
-  // Total number of medicine types
+  const lowStockMedicines = medicines.filter(m => getCurrentStock(m.id) < 10);
   const totalMedicines = medicines.length;
 
-  // Sum of all current stock from all medicines
-  const totalCurrentStock = medicines.reduce((sum, medicine) => {
-    return sum + getCurrentStock(medicine.id);
+  const totalCurrentStock = medicines.reduce((sum, m) => {
+    return sum + getCurrentStock(m.id);
   }, 0);
 
-  // Statistics to display in cards
   const stats = [
     {
       title: 'Total Medicines',
@@ -84,7 +73,7 @@ const DashboardOverview: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <Calendar className="h-4 w-4" />
-          <span>{new Date().toLocaleDateString()}</span>
+          <span>{new Intl.DateTimeFormat('en-PH', { dateStyle: 'long' }).format(new Date())}</span>
         </div>
       </div>
 
@@ -140,34 +129,36 @@ const DashboardOverview: React.FC = () => {
       <div className="bg-white p-6 rounded-xl border border-gray-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Transactions</h3>
         <div className="space-y-3">
-          {/* Show last 5 transactions in reverse order (most recent first) */}
           {transactions.slice(-5).reverse().map(transaction => {
             const medicine = medicines.find(m => m.id === transaction.medicine_id);
-            const txnType = transaction.txn_type_id === 5 ? 'Dispensed' : 'Stock In';
-            
+            if (!medicine) return null;
+
+            const txnType = stockInTypes.includes(transaction.txn_type_id)
+              ? 'Stock In'
+              : dispenseTypes.includes(transaction.txn_type_id)
+              ? 'Dispensed'
+              : 'Other';
+
+            const isDispensed = dispenseTypes.includes(transaction.txn_type_id);
+
             return (
               <div key={transaction.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  {/* Transaction type icon */}
-                  <div className={`p-2 rounded-lg ${
-                    transaction.txn_type_id === 5 ? 'bg-red-100' : 'bg-green-100'
-                  }`}>
-                    {transaction.txn_type_id === 5 ? (
+                  <div className={`p-2 rounded-lg ${isDispensed ? 'bg-red-100' : 'bg-green-100'}`}>
+                    {isDispensed ? (
                       <TrendingDown className="h-4 w-4 text-red-600" />
                     ) : (
                       <TrendingUp className="h-4 w-4 text-green-600" />
                     )}
                   </div>
-                  {/* Medicine and type info */}
                   <div>
-                    <p className="font-medium text-gray-900">{medicine?.name}</p>
+                    <p className="font-medium text-gray-900">{medicine.name}</p>
                     <p className="text-sm text-gray-600">{txnType}</p>
                   </div>
                 </div>
-                {/* Quantity and date info */}
                 <div className="text-right">
                   <p className="font-semibold text-gray-900">
-                    {transaction.quantity} {medicine?.unit}
+                    {transaction.quantity} {medicine.unit}{transaction.quantity > 1 ? 's' : ''}
                   </p>
                   <p className="text-sm text-gray-500">{transaction.txn_date}</p>
                 </div>

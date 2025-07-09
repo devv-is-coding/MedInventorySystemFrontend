@@ -6,7 +6,7 @@ import { TrendingDown, Search, Minus } from 'lucide-react'; // Lucide icons
 
 const DispenseForm: React.FC = () => {
   // Accessing global state and methods
-  const { medicines, addTransaction, getCurrentStock } = useApp();
+  const { medicines, addTransaction,transactionTypes , getCurrentStock } = useApp();
 
   // Local form state
   const [selectedMedicine, setSelectedMedicine] = useState('');
@@ -14,6 +14,10 @@ const DispenseForm: React.FC = () => {
   const [remarks, setRemarks] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [transactionType, setTransactionType] = useState('5'); 
+
+    // Transaction types allowed for Stock-In
+  const despenseType = transactionTypes.filter(d => [5, 6, 7, 8].includes(d.id));
 
   // Filtered medicine list for search dropdown
   const filteredMedicines = medicines.filter((medicine) =>
@@ -42,7 +46,7 @@ const DispenseForm: React.FC = () => {
       // Send transaction to backend
       await addTransaction({
         medicine_id: selectedMedicine,
-        txn_type_id: 5, // DISPENSE type ID
+        txn_type_id: parseInt(transactionType),
         txn_date: new Date().toISOString().split('T')[0],
         quantity: dispenseQuantity,
         remarks,
@@ -77,8 +81,24 @@ const DispenseForm: React.FC = () => {
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Dispense Transaction</h3>
-
             <form onSubmit={handleSubmit} className="space-y-4">
+               {/* Transaction Type Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Transaction Type *
+                </label>
+                <select
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  {despenseType.map(type => (
+                    <option key={type.id} value={type.id.toString()}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {/* Medicine Search + Select */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -71,14 +71,13 @@ export interface AppContextType {
   transactions: StockTransaction[];
   transactionTypes: TransactionType[];
   addTransaction: (transaction: Omit<StockTransaction, 'id' | 'created_at'>) => Promise<void>;
-  getTransactionsByDate: (date: string) => StockTransaction[];
+  getTransactionsByDate: (date: string) => Promise<StockTransaction[]>;
   getCurrentStock: (medicineId: string) => number;
   getMonthlyReport: (year: number, month: number) => Promise<MonthlyReport[]>;
   performMonthClose: (year: number, month: number) => Promise<void>;
   loadTransactions: () => Promise<void>;
   loadTransactionTypes: () => Promise<void>;
 }
-
 /* ----------------------------------
    Context Setup
 ----------------------------------- */
@@ -308,8 +307,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const getTransactionsByDate = (date: string): StockTransaction[] =>
-    transactions.filter((t) => t.txn_date === date);
+ const getTransactionsByDate = async (date: string): Promise<StockTransaction[]> => {
+  try {
+    const response = await api.get('/reports/daily', { params: { date } });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      toast.error('Failed to load daily report');
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching daily transactions:', error);
+    toast.error('Error fetching daily report');
+    return [];
+  }
+};
+
 
   const getCurrentStock = (medicineId: string): number => {
     const medicine = medicines.find((m) => m.id === medicineId);

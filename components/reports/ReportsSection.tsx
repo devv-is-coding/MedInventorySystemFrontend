@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext'; // Custom context hook
-import { FileText, Download, Calendar, Filter } from 'lucide-react'; // Icons
+import { FileText, Download, Calendar, Filter } from 'lucide-react';
+import type { StockTransaction } from '@/context/AppContext'; // or the correct relative path
+
 
 const ReportsSection: React.FC = () => {
-  // Extract necessary data/functions from the app context
   const {
     medicines,
     transactions,
@@ -14,57 +15,67 @@ const ReportsSection: React.FC = () => {
     getMonthlyReport,
   } = useApp();
 
-  // State for switching between Daily or Monthly report
+  // Report type: 'daily' or 'monthly'
   const [reportType, setReportType] = useState<'daily' | 'monthly'>('daily');
 
-  // Daily report date selector (defaults to today)
+  // Daily date picker
+  const today = new Date();
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0]
+    today.toISOString().split('T')[0]
   );
 
-  // Monthly report selectors
-  const [selectedMonth, setSelectedMonth] = useState(
-    new Date().getMonth() + 1
-  );
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  // Monthly selectors
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
-  // Monthly report data
   const [monthlyReport, setMonthlyReport] = useState<any[]>([]);
-
-  // Loading indicator
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get filtered daily transactions from context
-  const dailyTransactions = getTransactionsByDate(selectedDate);
+  const [dailyTransactions, setDailyTransactions] = useState<StockTransaction[]>([]);
 
-  // Load monthly report whenever month/year or reportType changes
+useEffect(() => {
+  if (reportType === 'daily') {
+    const fetch = async () => {
+      setIsLoading(true);
+      try {
+        const txns = await getTransactionsByDate(selectedDate);
+        setDailyTransactions(txns);
+      } catch (err) {
+        console.error('Failed to load daily report:', err);
+        setDailyTransactions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetch();
+  }
+}, [selectedDate, reportType, getTransactionsByDate]);
+
+
   useEffect(() => {
     if (reportType === 'monthly') {
-      const loadMonthlyReport = async () => {
+      const fetch = async () => {
         setIsLoading(true);
         try {
           const report = await getMonthlyReport(selectedYear, selectedMonth);
           setMonthlyReport(report);
-        } catch (error) {
-          console.error('Error loading monthly report:', error);
+        } catch (err) {
+          console.error('Failed to load monthly report:', err);
           setMonthlyReport([]);
         } finally {
           setIsLoading(false);
         }
       };
-
-      loadMonthlyReport();
+      fetch();
     }
   }, [selectedMonth, selectedYear, reportType, getMonthlyReport]);
 
-  // Placeholder PDF export (use `jsPDF` or `react-to-print` in real apps)
   const exportToPDF = () => {
-    console.log('Exporting to PDF...');
+    console.log('Exporting to PDF... (placeholder)');
   };
 
-  // Placeholder Excel export (use `xlsx` or similar libs in real apps)
   const exportToExcel = () => {
-    console.log('Exporting to Excel...');
+    console.log('Exporting to Excel... (placeholder)');
   };
 
   return (
@@ -76,18 +87,17 @@ const ReportsSection: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
         </div>
 
-        {/* Export Buttons */}
         <div className="flex items-center space-x-2">
           <button
             onClick={exportToPDF}
-            className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+            className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
           >
             <Download className="h-4 w-4" />
             <span>PDF</span>
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
           >
             <Download className="h-4 w-4" />
             <span>Excel</span>
@@ -95,7 +105,7 @@ const ReportsSection: React.FC = () => {
         </div>
       </div>
 
-      {/* Report Type Tabs */}
+      {/* Report Type Toggle */}
       <div className="flex space-x-4 border-b border-gray-200">
         {['daily', 'monthly'].map((type) => (
           <button
@@ -112,7 +122,7 @@ const ReportsSection: React.FC = () => {
         ))}
       </div>
 
-      {/* Date or Month/Year Picker */}
+      {/* Date / Month-Year Picker */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="flex items-center space-x-4">
           <Filter className="h-5 w-5 text-gray-500" />
@@ -146,37 +156,39 @@ const ReportsSection: React.FC = () => {
                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
-                {Array.from({ length: 5 }, (_, i) => (
-                  <option key={2020 + i} value={2020 + i}>
-                    {2020 + i}
-                  </option>
-                ))}
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = today.getFullYear() - 2 + i;
+                  return (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}
         </div>
       </div>
 
-      {/* Report Content */}
+      {/* Report Output */}
       <div className="bg-white rounded-lg border border-gray-200">
-        {/* Daily Report Table */}
         {reportType === 'daily' ? (
-          <div>
+          <>
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">
-                Daily Report - {new Date(selectedDate).toLocaleDateString()}
+                Daily Report – {new Date(selectedDate).toLocaleDateString()}
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    {['Medicine', 'Transaction Type', 'Quantity', 'Remarks'].map((header) => (
+                    {['Medicine', 'Transaction Type', 'Quantity', 'Remarks'].map((h) => (
                       <th
-                        key={header}
+                        key={h}
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        {header}
+                        {h}
                       </th>
                     ))}
                   </tr>
@@ -187,41 +199,33 @@ const ReportsSection: React.FC = () => {
                     const txnType = transactionTypes.find((t) => t.id === txn.txn_type_id);
                     return (
                       <tr key={txn.id}>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {medicine?.name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {txnType?.label}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{medicine?.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{txnType?.label}</td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {txn.quantity} {medicine?.unit}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {txn.remarks || '-'}
-                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{txn.remarks || '-'}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
             </div>
-          </div>
+          </>
         ) : (
-          // Monthly Report Table
-          <div>
+          <>
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold">
-                Monthly Report -{' '}
+                Monthly Report –{' '}
                 {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', {
                   month: 'long',
                   year: 'numeric',
                 })}
               </h3>
             </div>
-
             {isLoading ? (
               <div className="p-8 text-center">
-                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2 rounded-full" />
+                <div className="animate-spin h-8 w-8 border-b-2 border-blue-600 rounded-full mx-auto mb-2" />
                 <p className="text-gray-600">Loading report...</p>
               </div>
             ) : (
@@ -237,47 +241,36 @@ const ReportsSection: React.FC = () => {
                         'New Added',
                         'Dispensed',
                         'Closing Stock',
-                      ].map((header) => (
+                      ].map((label) => (
                         <th
-                          key={header}
+                          key={label}
                           className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
-                          {header}
+                          {label}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {monthlyReport.map((report) => (
-                      <tr key={report.medicine_id}>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.medicine.name}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.opening_stock} {report.medicine.unit}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.total_return} {report.medicine.unit}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.total_donation} {report.medicine.unit}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.total_new_added} {report.medicine.unit}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.total_dispensed} {report.medicine.unit}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          {report.closing_stock} {report.medicine.unit}
-                        </td>
-                      </tr>
-                    ))}
+                    {monthlyReport.map((report) => {
+                      const unit = report.medicine.unit;
+                      return (
+                        <tr key={report.medicine_id}>
+                          <td className="px-6 py-4 text-sm text-gray-900">{report.medicine.name}</td>
+                          <td className="px-6 py-4 text-sm">{report.opening_stock} {unit}</td>
+                          <td className="px-6 py-4 text-sm">{report.total_return} {unit}</td>
+                          <td className="px-6 py-4 text-sm">{report.total_donation} {unit}</td>
+                          <td className="px-6 py-4 text-sm">{report.total_new_added} {unit}</td>
+                          <td className="px-6 py-4 text-sm">{report.total_dispensed} {unit}</td>
+                          <td className="px-6 py-4 text-sm">{report.closing_stock} {unit}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
