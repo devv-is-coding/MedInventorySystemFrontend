@@ -1,15 +1,8 @@
-'use client'; // Ensures this component runs on the client side (Next.js)
+"use client"; // Ensures this component runs on the client side (Next.js)
 
-import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext'; // Import global app context
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Package,
-  Pill
-} from 'lucide-react'; // Icon imports
+import React, { useState } from "react";
+import { useApp } from "@/context/AppContext"; // Import global app context
+import { Plus, Search, Edit, Trash2, Package, Pill } from "lucide-react"; // Icon imports
 
 // Type definition for medicine form input fields
 interface MedicineFormData {
@@ -21,31 +14,38 @@ interface MedicineFormData {
 
 const MedicineList: React.FC = () => {
   // Pull actions and data from app context
-  const { medicines, addMedicine, updateMedicine, deleteMedicine, getCurrentStock } = useApp();
+  const {
+    medicines,
+    addMedicine,
+    updateMedicine,
+    deleteMedicine,
+    getCurrentStock,
+  } = useApp();
 
   // Local state variables
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState<string | null>(null);
   const [formData, setFormData] = useState<MedicineFormData>({
-    name: '',
-    unit: '',
-    dosage_form: '',
-    description: ''
+    name: "",
+    unit: "",
+    dosage_form: "",
+    description: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filter medicines based on the search query
-  const filteredMedicines = medicines.filter(medicine =>
-    medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    medicine.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    medicine.dosage_form.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMedicines = medicines.filter(
+    (medicine) =>
+      medicine.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      medicine.unit.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      medicine.dosage_form.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Handles form submission for adding/updating medicine
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.unit || !formData.dosage_form) return;
 
     setIsSubmitting(true);
@@ -59,10 +59,10 @@ const MedicineList: React.FC = () => {
       }
 
       // Reset form after submission
-      setFormData({ name: '', unit: '', dosage_form: '', description: '' });
+      setFormData({ name: "", unit: "", dosage_form: "", description: "" });
       setShowForm(false);
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -74,7 +74,7 @@ const MedicineList: React.FC = () => {
       name: medicine.name,
       unit: medicine.unit,
       dosage_form: medicine.dosage_form,
-      description: medicine.description
+      description: medicine.description,
     });
     setEditingMedicine(medicine.id);
     setShowForm(true);
@@ -82,18 +82,18 @@ const MedicineList: React.FC = () => {
 
   // Handle medicine deletion
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this medicine?')) {
+    if (window.confirm("Are you sure you want to delete this medicine?")) {
       try {
         await deleteMedicine(id);
       } catch (error: any) {
-        console.error('Error deleting medicine:', error);
+        console.error("Error deleting medicine:", error);
       }
     }
   };
 
   // Reset form state
   const resetForm = () => {
-    setFormData({ name: '', unit: '', dosage_form: '', description: '' });
+    setFormData({ name: "", unit: "", dosage_form: "", description: "" });
     setEditingMedicine(null);
     setShowForm(false);
   };
@@ -126,84 +126,110 @@ const MedicineList: React.FC = () => {
 
       {/* Medicine Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingMedicine ? 'Edit Medicine' : 'Add New Medicine'}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 transition">
+          <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl p-6 md:p-8 animate-fadeIn">
+            {/* Modal Title */}
+            <h3 className="text-xl font-semibold text-blue-600 mb-6 text-center">
+              {editingMedicine ? "Edit Medicine" : "Add New Medicine"}
             </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Form fields for name, unit, dosage_form, and description */}
+
+            {/* Close Button */}
+            <button
+              onClick={resetForm}
+              className="absolute top-3 right-4 text-gray-400 hover:text-gray-800 text-2xl"
+            >
+              &times;
+            </button>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Medicine Name *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   required
                 />
               </div>
+
+              {/* Unit */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Unit *
                 </label>
                 <input
                   type="text"
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                  placeholder="e.g., tablet, mL, capsule"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setFormData({ ...formData, unit: e.target.value })
+                  }
+                  placeholder="e.g. tablet, mL, capsule"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   required
                 />
               </div>
+
+              {/* Dosage Form */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Dosage Form *
                 </label>
                 <input
                   type="text"
                   value={formData.dosage_form}
-                  onChange={(e) => setFormData({ ...formData, dosage_form: e.target.value })}
-                  placeholder="e.g., tablet, syrup, injection"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setFormData({ ...formData, dosage_form: e.target.value })
+                  }
+                  placeholder="e.g. tablet, syrup, injection"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   required
                 />
               </div>
+
+              {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Description
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder="Optional"
                 />
               </div>
 
-              {/* Submit and Cancel buttons */}
-              <div className="flex space-x-3">
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {editingMedicine ? 'Updating...' : 'Adding...'}
+                      {editingMedicine ? "Updating..." : "Adding..."}
                     </div>
                   ) : (
-                    `${editingMedicine ? 'Update' : 'Add'} Medicine`
+                    `${editingMedicine ? "Update" : "Add"} Medicine`
                   )}
                 </button>
+
                 <button
                   type="button"
                   onClick={resetForm}
                   disabled={isSubmitting}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400"
+                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 rounded-lg transition"
                 >
                   Cancel
                 </button>
@@ -220,17 +246,27 @@ const MedicineList: React.FC = () => {
             All Medicines ({filteredMedicines.length})
           </h3>
         </div>
-        
+
         {/* Table for displaying medicine data */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Medicine</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dosage Form</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Current Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Medicine
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Unit
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Dosage Form
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Current Stock
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -244,19 +280,31 @@ const MedicineList: React.FC = () => {
                           <Pill className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{medicine.name}</div>
-                          <div className="text-sm text-gray-500">{medicine.description}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {medicine.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {medicine.description}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{medicine.unit}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{medicine.dosage_form}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {medicine.unit}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {medicine.dosage_form}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         <Package className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className={`text-sm font-medium ${
-                          currentStock < 10 ? 'text-red-600' : 'text-green-600'
-                        }`}>
+                        <span
+                          className={`text-sm font-medium ${
+                            currentStock < 10
+                              ? "text-red-600"
+                              : "text-green-600"
+                          }`}
+                        >
                           {currentStock}
                         </span>
                       </div>
@@ -289,3 +337,4 @@ const MedicineList: React.FC = () => {
 };
 
 export default MedicineList;
+  

@@ -1,144 +1,148 @@
-'use client'; // Required for client-side rendering in Next.js
+"use client";
 
-import React, { useState } from 'react';
-import { useApp } from '@/context/AppContext'; // Custom global context
-import { TrendingDown, Search, Minus } from 'lucide-react'; // Lucide icons
+import React, { useState } from "react";
+import { useApp } from "@/context/AppContext";
+import { TrendingDown, Search, Minus } from "lucide-react";
 
 const DispenseForm: React.FC = () => {
-  // Accessing global state and methods
-  const { medicines, addTransaction,transactionTypes , getCurrentStock } = useApp();
+  const { medicines, addTransaction, transactionTypes, getCurrentStock } =
+    useApp();
 
-  // Local form state
-  const [selectedMedicine, setSelectedMedicine] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [remarks, setRemarks] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMedicine, setSelectedMedicine] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [remarks, setRemarks] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [transactionType, setTransactionType] = useState("5");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [transactionType, setTransactionType] = useState('5'); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Transaction types allowed for Stock-In
-  const despenseType = transactionTypes.filter(d => [5, 6, 7, 8].includes(d.id));
-
-  // Filtered medicine list for search dropdown
-  const filteredMedicines = medicines.filter((medicine) =>
-    medicine.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const dispenseTypes = transactionTypes.filter((d) =>
+    [5, 6, 7, 8].includes(d.id)
+  );
+  const filteredMedicines = medicines.filter((m) =>
+    m.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle form submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Basic validation
     if (!selectedMedicine || !quantity || parseInt(quantity) <= 0) return;
 
-    const medicine = medicines.find((m) => m.id === selectedMedicine);
-    if (!medicine) return;
-
     const currentStock = getCurrentStock(selectedMedicine);
-    const dispenseQuantity = parseInt(quantity);
-
-    // Check if quantity exceeds stock
-    if (dispenseQuantity > currentStock) return;
+    const dispenseQty = parseInt(quantity);
+    if (dispenseQty > currentStock) return;
 
     setIsSubmitting(true);
-
     try {
-      // Send transaction to backend
       await addTransaction({
         medicine_id: selectedMedicine,
         txn_type_id: parseInt(transactionType),
-        txn_date: new Date().toISOString().split('T')[0],
-        quantity: dispenseQuantity,
+        txn_date: new Date().toISOString().split("T")[0],
+        quantity: dispenseQty,
         remarks,
-        created_by: 'admin',
+        created_by: "admin",
       });
 
-      // Clear form on success
-      setSelectedMedicine('');
-      setQuantity('');
-      setRemarks('');
-      setSearchQuery('');
-    } catch (error: any) {
-      console.error('Error dispensing medicine:', error);
+      setSelectedMedicine("");
+      setQuantity("");
+      setRemarks("");
+      setSearchQuery("");
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Dispense error:", err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Get selected medicine details
   const selectedMedicineData = medicines.find((m) => m.id === selectedMedicine);
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center gap-3">
         <TrendingDown className="h-6 w-6 text-red-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Dispense Medicine</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Dispense</h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form Section */}
-        <div className="lg:col-span-2">
-          <div className="bg-white p-6 rounded-lg border border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">Dispense Transaction</h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-               {/* Transaction Type Dropdown */}
+      {/* Trigger Box */}
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="w-full p-10 rounded-xl border-2 border-dashed border-red-500 text-red-600 text-lg font-semibold hover:bg-red-50 transition"
+      >
+        + Tap to Dispense Medicine
+      </button>
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm transition-all duration-200">
+          <div className="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8 animate-fadeIn">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-3 right-4 text-gray-400 hover:text-gray-800 text-2xl"
+            >
+              &times;
+            </button>
+
+            {/* Modal Title */}
+            <h3 className="text-xl font-semibold text-red-600 mb-4">
+              Dispense Medicine
+            </h3>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Transaction Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Transaction Type *
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Transaction Type
                 </label>
                 <select
                   value={transactionType}
                   onChange={(e) => setTransactionType(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-400 focus:outline-none"
                 >
-                  {despenseType.map(type => (
-                    <option key={type.id} value={type.id.toString()}>
+                  {dispenseTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
                       {type.label}
                     </option>
                   ))}
                 </select>
               </div>
-              {/* Medicine Search + Select */}
+
+              {/* Search */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Medicine *
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Medicine
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
                     type="text"
-                    placeholder="Search medicines..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Search medicine..."
+                    className="w-full pl-10 py-2 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:outline-none"
                   />
                 </div>
 
-                {/* Dropdown of results */}
                 {searchQuery && (
-                  <div className="mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
-                    {filteredMedicines.map((medicine) => {
-                      const stock = getCurrentStock(medicine.id);
+                  <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto bg-white shadow-sm">
+                    {filteredMedicines.map((m) => {
+                      const stock = getCurrentStock(m.id);
                       return (
                         <button
-                          key={medicine.id}
                           type="button"
+                          key={m.id}
                           onClick={() => {
-                            setSelectedMedicine(medicine.id);
-                            setSearchQuery(medicine.name); // Show name in input
+                            setSelectedMedicine(m.id);
+                            setSearchQuery(m.name);
                           }}
-                          className="w-full p-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 border-b"
                         >
-                          <div className="font-medium text-gray-900">{medicine.name}</div>
-                          <div className="text-sm text-gray-500">
-                            {medicine.dosage_form} • Available: {stock} {medicine.unit}
+                          <div className="font-medium">{m.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {m.dosage_form} — Stock: {stock} {m.unit}
                           </div>
-                          {stock === 0 && (
-                            <div className="text-xs text-red-600 font-medium">
-                              Out of Stock
-                            </div>
-                          )}
                         </button>
                       );
                     })}
@@ -146,107 +150,76 @@ const DispenseForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Quantity Input */}
+              {/* Quantity */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Quantity to Dispense *
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Quantity
                 </label>
                 <input
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   min="1"
-                  max={selectedMedicineData ? getCurrentStock(selectedMedicineData.id) : undefined}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
+                  max={
+                    selectedMedicineData
+                      ? getCurrentStock(selectedMedicineData.id)
+                      : undefined
+                  }
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:outline-none"
                 />
                 {selectedMedicineData && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Available: {getCurrentStock(selectedMedicineData.id)} {selectedMedicineData.unit}
-                  </p>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Available: {getCurrentStock(selectedMedicineData.id)}{" "}
+                    {selectedMedicineData.unit}
+                  </div>
                 )}
               </div>
 
               {/* Remarks */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Remarks
+                </label>
                 <textarea
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="Patient details, prescription info, etc..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:outline-none"
+                  placeholder="Optional notes..."
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={
                   !selectedMedicine ||
                   !quantity ||
-                  (selectedMedicineData && getCurrentStock(selectedMedicineData.id) === 0) ||
-                  isSubmitting
+                  isSubmitting ||
+                  (selectedMedicineData &&
+                    getCurrentStock(selectedMedicineData.id) === 0)
                 }
-                className="w-full flex items-center justify-center space-x-2 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 rounded-lg transition-colors"
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    <span>Dispensing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Minus className="h-4 w-4" />
-                    <span>Dispense Medicine</span>
-                  </>
-                )}
+                {isSubmitting ? "Dispensing..." : "Dispense Medicine"}
               </button>
             </form>
           </div>
         </div>
+      )}
 
-        {/* Right Sidebar: Selected Medicine Details & Guidelines */}
-        <div className="space-y-4">
-          {/* Medicine Info */}
-          {selectedMedicineData && (
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h4 className="font-semibold text-red-900 mb-2">Selected Medicine</h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="font-medium text-red-800">Name:</span>
-                  <span className="ml-2 text-red-700">{selectedMedicineData.name}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-red-800">Form:</span>
-                  <span className="ml-2 text-red-700">{selectedMedicineData.dosage_form}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-red-800">Unit:</span>
-                  <span className="ml-2 text-red-700">{selectedMedicineData.unit}</span>
-                </div>
-                <div>
-                  <span className="font-medium text-red-800">Available Stock:</span>
-                  <span className="ml-2 text-red-700 font-semibold">
-                    {getCurrentStock(selectedMedicineData.id)} {selectedMedicineData.unit}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Guidelines */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <h4 className="font-semibold text-gray-900 mb-3">Dispense Guidelines</h4>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div>• Verify prescription before dispensing</div>
-              <div>• Check expiration dates</div>
-              <div>• Record patient information</div>
-              <div>• Ensure proper dosage instructions</div>
-              <div>• Update stock levels immediately</div>
-            </div>
-          </div>
-        </div>
+      {/* Guidelines */}
+      <div className="bg-white p-5 rounded-xl border border-gray-200">
+        <h4 className="text-lg font-semibold text-gray-800 mb-3">
+          Dispensing Guidelines
+        </h4>
+        <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+          <li>Verify prescription before dispensing</li>
+          <li>Check expiration date</li>
+          <li>Record patient info</li>
+          <li>Review dosage & instructions</li>
+          <li>Update stock immediately</li>
+        </ul>
       </div>
     </div>
   );
